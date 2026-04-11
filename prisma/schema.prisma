@@ -1,0 +1,257 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model accreditation_docs {
+  id           Int      @id @default(autoincrement()) @db.UnsignedInt
+  standar_code String   @db.VarChar(50)
+  ep_code      String?  @db.VarChar(50)
+  deskripsi    String?  @db.Text
+  file_url     String?  @db.Text
+  input_time   DateTime @default(now()) @db.DateTime(0)
+  user_id      Int?     @db.UnsignedInt
+  users        users?   @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_accred_user")
+
+  @@index([user_id], map: "fk_accred_user")
+  @@index([standar_code], map: "idx_accreditation_standar")
+}
+
+model audit_logs {
+  id          Int               @id @default(autoincrement()) @db.UnsignedInt
+  user_id     Int?              @db.UnsignedInt
+  action      audit_logs_action
+  module      String            @db.VarChar(100)
+  description String?           @db.Text
+  timestamp   DateTime          @default(now()) @db.DateTime(0)
+  users       users?            @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_audit_user")
+
+  @@index([timestamp(sort: Desc)], map: "idx_audit_timestamp")
+  @@index([user_id], map: "idx_audit_user_id")
+}
+
+model certificates {
+  id                Int               @id @default(autoincrement()) @db.UnsignedInt
+  personnel_id      Int               @db.UnsignedInt
+  nama_sertifikat   String            @db.VarChar(200)
+  tanggal_terbit    DateTime?         @db.Date
+  tanggal_expired   DateTime?         @db.Date
+  file_url          String?           @db.Text
+  medical_personnel medical_personnel @relation(fields: [personnel_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cert_personnel")
+
+  @@index([personnel_id], map: "idx_certificates_personnel")
+}
+
+model discharge_indicators {
+  id                Int       @id @default(autoincrement()) @db.UnsignedInt
+  nama_pasien       String    @db.VarChar(200)
+  no_rm             String    @db.VarChar(50)
+  tgl_masuk         DateTime  @db.Date
+  tgl_keluar        DateTime? @db.Date
+  status_kepulangan String?   @db.VarChar(100)
+  user_id           Int?      @db.UnsignedInt
+  created_at        DateTime  @default(now()) @db.DateTime(0)
+  users             users?    @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_discharge_user")
+
+  @@index([user_id], map: "fk_discharge_user")
+  @@index([no_rm], map: "idx_discharge_no_rm")
+  @@index([tgl_masuk], map: "idx_discharge_tgl_masuk")
+}
+
+model doctor_schedules {
+  id           Int      @id @default(autoincrement()) @db.UnsignedInt
+  nama_dokter  String   @db.VarChar(200)
+  foto_dokter  String?  @db.Text
+  spesialis    String?  @db.VarChar(150)
+  poli         String?  @db.VarChar(150)
+  hari         String   @db.VarChar(50)
+  jam          String?  @db.VarChar(50)
+  jam_mulai    String?  @db.VarChar(10)
+  jam_selesai  String?  @db.VarChar(10)
+  kuota_pasien Int?     @default(0)
+  is_active    Boolean  @default(true)
+}
+
+model facilities {
+  id          Int     @id @default(autoincrement()) @db.UnsignedInt
+  title       String  @db.VarChar(200)
+  description String? @db.Text
+  icon_code   String? @db.VarChar(100)
+  urutan      Int?    @default(0)
+}
+
+model hospital_info {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  key        String   @unique(map: "key") @db.VarChar(100)
+  value      String?  @db.Text
+  updated_at DateTime @default(now()) @db.DateTime(0)
+}
+
+model internal_memos {
+  id           Int                     @id @default(autoincrement()) @db.UnsignedInt
+  tanggal      DateTime                @default(dbgenerated("(curdate())")) @db.Date
+  perihal      String                  @db.VarChar(300)
+  kepada       String                  @db.VarChar(300)
+  dari         String                  @db.VarChar(300)
+  kategori     internal_memos_kategori
+  status       internal_memos_status   @default(Draft)
+  content_text String?                 @db.Text
+  created_by   Int?                    @db.UnsignedInt
+  created_at   DateTime                @default(now()) @db.DateTime(0)
+  users        users?                  @relation(fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_memo_user")
+
+  @@index([created_by], map: "fk_memo_user")
+  @@index([tanggal(sort: Desc)], map: "idx_memos_tanggal")
+}
+
+model legal_pks {
+  id               Int                       @id @default(autoincrement()) @db.UnsignedInt
+  jenis_pengajuan  legal_pks_jenis_pengajuan
+  nama_mitra       String                    @db.VarChar(200)
+  jenis_kerjasama  String?                   @db.VarChar(200)
+  unit_pengusul_id Int?                      @db.UnsignedInt
+  tanggal_mulai    DateTime?                 @db.Date
+  tanggal_berakhir DateTime?                 @db.Date
+  status           legal_pks_status          @default(Proses)
+  nilai_kerjasama  Decimal?                  @db.Decimal(15, 2)
+  keterangan       String?                   @db.Text
+  ruang_lingkup    String?                   @db.Text
+  file_pks_url     String?                   @db.Text
+  created_at       DateTime                  @default(now()) @db.DateTime(0)
+  units            units?                    @relation(fields: [unit_pengusul_id], references: [id], onUpdate: NoAction, map: "fk_pks_unit")
+
+  @@index([unit_pengusul_id], map: "fk_pks_unit")
+  @@index([status], map: "idx_legal_pks_status")
+}
+
+model medical_personnel {
+  id                Int                      @id @default(autoincrement()) @db.UnsignedInt
+  nama              String                   @db.VarChar(200)
+  unit_id           Int?                     @db.UnsignedInt
+  status            medical_personnel_status
+  nira              String?                  @db.VarChar(100)
+  str               String?                  @db.VarChar(100)
+  sip               String?                  @db.VarChar(100)
+  kewenangan_klinis String?                  @db.Text
+  pks_sk            String?                  @db.VarChar(200)
+  input_time        DateTime                 @default(now()) @db.DateTime(0)
+  certificates      certificates[]
+  units             units?                   @relation(fields: [unit_id], references: [id], onUpdate: NoAction, map: "fk_personnel_unit")
+
+  @@index([unit_id], map: "idx_personnel_unit")
+}
+
+model news_articles {
+  id           Int       @id @default(autoincrement()) @db.UnsignedInt
+  title        String    @db.VarChar(300)
+  slug         String?   @unique(map: "idx_news_slug") @db.VarChar(300)
+  category     String?   @db.VarChar(100)
+  summary      String?   @db.Text
+  content      String?   @db.LongText
+  image_url    String?   @db.Text
+  published_at DateTime? @db.DateTime(0)
+  author_id    Int?      @db.UnsignedInt
+  is_published Boolean   @default(false)
+  created_at   DateTime  @default(now()) @db.DateTime(0)
+  users        users?    @relation(fields: [author_id], references: [id], onUpdate: NoAction, map: "fk_news_author")
+
+  @@index([author_id], map: "fk_news_author")
+  @@index([published_at(sort: Desc)], map: "idx_news_published")
+}
+
+model units {
+  id                Int                 @id @default(autoincrement()) @db.UnsignedInt
+  nama_unit         String              @unique(map: "nama_unit") @db.VarChar(150)
+  legal_pks         legal_pks[]
+  medical_personnel medical_personnel[]
+}
+
+model users {
+  id                   Int                    @id @default(autoincrement()) @db.UnsignedInt
+  username             String                 @unique(map: "username") @db.VarChar(100)
+  email                String                 @unique(map: "email") @db.VarChar(150)
+  password_hash        String                 @db.Text
+  full_name            String                 @db.VarChar(200)
+  role                 users_role
+  last_login           DateTime?              @db.DateTime(0)
+  is_active            Boolean                @default(true)
+  created_at           DateTime               @default(now()) @db.DateTime(0)
+  accreditation_docs   accreditation_docs[]
+  audit_logs           audit_logs[]
+  discharge_indicators discharge_indicators[]
+  internal_memos       internal_memos[]
+  news_articles        news_articles[]
+}
+
+model web_banners {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  title       String?  @db.VarChar(200)
+  description String?  @db.Text
+  image_url   String   @db.Text
+  link_url    String?  @db.Text
+  is_active   Boolean  @default(true)
+  urutan      Int?     @default(0)
+  created_at  DateTime @default(now()) @db.DateTime(0)
+}
+
+enum legal_pks_jenis_pengajuan {
+  Baru
+  Perpanjang
+}
+
+enum audit_logs_action {
+  Create
+  Update
+  Delete
+}
+
+enum medical_personnel_status {
+  Tetap
+  Kontrak
+}
+
+enum doctor_schedules_hari {
+  Senin
+  Selasa
+  Rabu
+  Kamis
+  Jumat
+  Sabtu
+  Minggu
+}
+
+enum users_role {
+  Admin
+  Medis
+  Legal
+  Sekretariat
+}
+
+enum internal_memos_kategori {
+  Undangan
+  Informasi
+  Pengumuman
+}
+
+enum internal_memos_status {
+  Draft
+  Terkirim
+}
+
+enum legal_pks_status {
+  Aktif
+  Proses
+  Selesai
+}
+
+model user_guides {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  judul       String   @db.VarChar(255)
+  deskripsi   String?  @db.Text
+  file_url    String   @db.Text
+  created_at  DateTime @default(now()) @db.DateTime(0)
+}
