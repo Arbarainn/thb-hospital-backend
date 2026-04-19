@@ -14,6 +14,7 @@ const newsUploadDir = path.join(__dirname, '../../uploads/news');
 const panduanUploadDir = path.join(__dirname, '../../uploads/panduan');
 const sertifikatUploadDir = path.join(__dirname, '../../uploads/sertifikat');
 const legalUploadDir = path.join(__dirname, '../../uploads/legal');
+const personnelUploadDir = path.join(__dirname, '../../uploads/personnel');
 
 createUploadDir(doctorUploadDir);
 createUploadDir(bannerUploadDir);
@@ -21,6 +22,7 @@ createUploadDir(newsUploadDir);
 createUploadDir(panduanUploadDir);
 createUploadDir(sertifikatUploadDir);
 createUploadDir(legalUploadDir);
+createUploadDir(personnelUploadDir);
 
 const createStorage = (destPath, prefix) => multer.diskStorage({
   destination: (req, file, cb) => {
@@ -43,11 +45,17 @@ const imageFilter = (req, file, cb) => {
 };
 
 const documentFilter = (req, file, cb) => {
-  const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  const allowedTypes = [
+    'application/pdf', 
+    'application/msword', 
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Hanya file dokumen (PDF, DOC, DOCX) yang diperbolehkan'), false);
+    cb(new Error('Hanya file dokumen (PDF, DOC, DOCX, XLS, XLSX) yang diperbolehkan'), false);
   }
 };
 
@@ -63,5 +71,14 @@ const uploadNewsImage = multer(multerConfig(createStorage(newsUploadDir, 'news')
 const uploadDocument = multer(multerConfig(createStorage(panduanUploadDir, 'panduan'), documentFilter));
 const uploadCertificate = multer(multerConfig(createStorage(sertifikatUploadDir, 'cert'), documentFilter));
 const uploadLegalDocument = multer(multerConfig(createStorage(legalUploadDir, 'legal'), documentFilter));
+const uploadPersonnelDocument = multer(multerConfig(createStorage(personnelUploadDir, 'personnel'), documentFilter));
 
-module.exports = { uploadDoctorPhoto, uploadBannerImage, uploadNewsImage, uploadDocument, uploadCertificate, uploadLegalDocument };
+module.exports = { 
+  uploadDoctorPhoto, 
+  uploadBannerImage, 
+  uploadNewsImage, 
+  uploadDocument, 
+  uploadCertificate, 
+  uploadLegalDocument,
+  uploadPersonnelDocument 
+};

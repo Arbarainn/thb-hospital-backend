@@ -9,8 +9,8 @@ const medicalPersonnelService = {
     if (search) {
       where.OR = [
         { nama: { contains: search } },
-        { nira: { contains: search } },
-        { str: { contains: search } },
+        { str_number: { contains: search } },
+        { sip_number: { contains: search } },
       ];
     }
     if (status) where.status = status;

@@ -6,7 +6,8 @@ const {
   uploadNewsImage, 
   uploadDocument, 
   uploadCertificate,
-  uploadLegalDocument 
+  uploadLegalDocument,
+  uploadPersonnelDocument 
 } = require('../config/upload');
 
 // ─── Controllers ─────────────────────────────────────────────
@@ -105,8 +106,18 @@ router.delete('/legal-pks/:id', legalPksController.delete);
 // ─── Medical Personnel ──────────────────────────────────────
 router.get('/medical-personnel', medicalPersonnelController.getAll);
 router.get('/medical-personnel/:id', medicalPersonnelController.getById);
-router.post('/medical-personnel', medicalPersonnelController.create);
-router.put('/medical-personnel/:id', medicalPersonnelController.update);
+router.post('/medical-personnel', uploadPersonnelDocument.fields([
+  { name: 'str_file', maxCount: 1 },
+  { name: 'sip_file', maxCount: 1 },
+  { name: 'pks_file', maxCount: 1 },
+  { name: 'sk_file', maxCount: 1 },
+]), medicalPersonnelController.create);
+router.put('/medical-personnel/:id', uploadPersonnelDocument.fields([
+  { name: 'str_file', maxCount: 1 },
+  { name: 'sip_file', maxCount: 1 },
+  { name: 'pks_file', maxCount: 1 },
+  { name: 'sk_file', maxCount: 1 },
+]), medicalPersonnelController.update);
 router.delete('/medical-personnel/:id', medicalPersonnelController.delete);
 
 // ─── News Articles ───────────────────────────────────────────

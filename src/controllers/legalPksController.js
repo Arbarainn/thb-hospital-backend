@@ -36,6 +36,7 @@ const legalPksController = {
 
       // Parse decimal
       if (body.nilai_kerjasama) body.nilai_kerjasama = Number(body.nilai_kerjasama);
+      if (body.discount) body.discount = Number(body.discount);
 
       // Handle file upload
       if (req.file) {
@@ -65,6 +66,7 @@ const legalPksController = {
 
       // Parse decimal
       if (body.nilai_kerjasama) body.nilai_kerjasama = Number(body.nilai_kerjasama);
+      if (body.discount) body.discount = Number(body.discount);
 
       // Handle file upload
       if (req.file) {

@@ -63,17 +63,17 @@ model discharge_indicators {
 }
 
 model doctor_schedules {
-  id           Int      @id @default(autoincrement()) @db.UnsignedInt
-  nama_dokter  String   @db.VarChar(200)
-  foto_dokter  String?  @db.Text
-  spesialis    String?  @db.VarChar(150)
-  poli         String?  @db.VarChar(150)
-  hari         String   @db.VarChar(50)
-  jam          String?  @db.VarChar(50)
-  jam_mulai    String?  @db.VarChar(10)
-  jam_selesai  String?  @db.VarChar(10)
-  kuota_pasien Int?     @default(0)
-  is_active    Boolean  @default(true)
+  id           Int     @id @default(autoincrement()) @db.UnsignedInt
+  nama_dokter  String  @db.VarChar(200)
+  spesialis    String? @db.VarChar(150)
+  poli         String? @db.VarChar(150)
+  hari         String  @db.VarChar(50)
+  jam          String? @db.VarChar(50)
+  is_active    Boolean @default(true)
+  jam_mulai    String? @db.VarChar(10)
+  jam_selesai  String? @db.VarChar(10)
+  kuota_pasien Int?    @default(0)
+  foto_dokter  String? @db.Text
 }
 
 model facilities {
@@ -104,6 +104,12 @@ model internal_memos {
   created_at   DateTime                @default(now()) @db.DateTime(0)
   users        users?                  @relation(fields: [created_by], references: [id], onUpdate: NoAction, map: "fk_memo_user")
 
+  // Approvals
+  status_dir_keuangan  internal_memos_approval_status @default(Pending)
+  status_dir_umum      internal_memos_approval_status @default(Pending)
+  status_dir_sdm_legal internal_memos_approval_status @default(Pending)
+  status_dir_utama     internal_memos_approval_status @default(Pending)
+
   @@index([created_by], map: "fk_memo_user")
   @@index([tanggal(sort: Desc)], map: "idx_memos_tanggal")
 }
@@ -117,11 +123,19 @@ model legal_pks {
   tanggal_mulai    DateTime?                 @db.Date
   tanggal_berakhir DateTime?                 @db.Date
   status           legal_pks_status          @default(Proses)
-  nilai_kerjasama  Decimal?                  @db.Decimal(15, 2)
-  keterangan       String?                   @db.Text
-  ruang_lingkup    String?                   @db.Text
   file_pks_url     String?                   @db.Text
   created_at       DateTime                  @default(now()) @db.DateTime(0)
+  keterangan       String?                   @db.Text
+  nilai_kerjasama  Decimal?                  @db.Decimal(15, 2)
+  ruang_lingkup    String?                   @db.Text
+  
+  // New fields
+  discount         Decimal?                  @db.Decimal(15, 2)
+  pic_mitra_nama   String?                   @db.VarChar(200)
+  pic_mitra_telp   String?                   @db.VarChar(50)
+  pic_mitra_email  String?                   @db.VarChar(150)
+  cara_pembayaran  String?                   @db.Text
+
   units            units?                    @relation(fields: [unit_pengusul_id], references: [id], onUpdate: NoAction, map: "fk_pks_unit")
 
   @@index([unit_pengusul_id], map: "fk_pks_unit")
@@ -133,11 +147,30 @@ model medical_personnel {
   nama              String                   @db.VarChar(200)
   unit_id           Int?                     @db.UnsignedInt
   status            medical_personnel_status
-  nira              String?                  @db.VarChar(100)
-  str               String?                  @db.VarChar(100)
-  sip               String?                  @db.VarChar(100)
+  
+  // STR
+  str_number        String?                  @db.VarChar(100)
+  str_file_url      String?                  @db.Text
+  
+  // SIP
+  sip_number        String?                  @db.VarChar(100)
+  sip_start_date    DateTime?                @db.Date
+  sip_end_date      DateTime?                @db.Date
+  sip_file_url      String?                  @db.Text
+
+  // PKS
+  pks_number        String?                  @db.VarChar(100)
+  pks_start_date    DateTime?                @db.Date
+  pks_end_date      DateTime?                @db.Date
+  pks_file_url      String?                  @db.Text
+
+  // SK
+  sk_number         String?                  @db.VarChar(100)
+  sk_start_date     DateTime?                @db.Date
+  sk_end_date       DateTime?                @db.Date
+  sk_file_url       String?                  @db.Text
+  
   kewenangan_klinis String?                  @db.Text
-  pks_sk            String?                  @db.VarChar(200)
   input_time        DateTime                 @default(now()) @db.DateTime(0)
   certificates      certificates[]
   units             units?                   @relation(fields: [unit_id], references: [id], onUpdate: NoAction, map: "fk_personnel_unit")
@@ -198,6 +231,14 @@ model web_banners {
   created_at  DateTime @default(now()) @db.DateTime(0)
 }
 
+model user_guides {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  judul      String   @db.VarChar(255)
+  deskripsi  String?  @db.Text
+  file_url   String   @db.Text
+  created_at DateTime @default(now()) @db.DateTime(0)
+}
+
 enum legal_pks_jenis_pengajuan {
   Baru
   Perpanjang
@@ -211,17 +252,7 @@ enum audit_logs_action {
 
 enum medical_personnel_status {
   Tetap
-  Kontrak
-}
-
-enum doctor_schedules_hari {
-  Senin
-  Selasa
-  Rabu
-  Kamis
-  Jumat
-  Sabtu
-  Minggu
+  Tidak_Tetap
 }
 
 enum users_role {
@@ -235,6 +266,14 @@ enum internal_memos_kategori {
   Undangan
   Informasi
   Pengumuman
+  Pengajuan
+}
+
+enum internal_memos_approval_status {
+  Pending
+  Done
+  Returned
+  Declined
 }
 
 enum internal_memos_status {
@@ -246,12 +285,4 @@ enum legal_pks_status {
   Aktif
   Proses
   Selesai
-}
-
-model user_guides {
-  id          Int      @id @default(autoincrement()) @db.UnsignedInt
-  judul       String   @db.VarChar(255)
-  deskripsi   String?  @db.Text
-  file_url    String   @db.Text
-  created_at  DateTime @default(now()) @db.DateTime(0)
 }
