@@ -110,6 +110,8 @@ model internal_memos {
   status_dir_sdm_legal internal_memos_approval_status @default(Pending)
   status_dir_utama     internal_memos_approval_status @default(Pending)
 
+  attachment_url       String?                        @db.Text
+
   @@index([created_by], map: "fk_memo_user")
   @@index([tanggal(sort: Desc)], map: "idx_memos_tanggal")
 }

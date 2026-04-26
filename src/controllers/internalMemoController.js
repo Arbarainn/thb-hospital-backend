@@ -24,6 +24,11 @@ const internalMemoController = {
     try {
       const body = { ...req.body };
       if (body.tanggal) body.tanggal = new Date(body.tanggal);
+      
+      if (req.file) {
+        body.attachment_url = `/uploads/memos/${req.file.filename}`;
+      }
+
       const data = await internalMemoService.create(body);
       res.status(201).json({ success: true, data });
     } catch (error) {
@@ -35,6 +40,20 @@ const internalMemoController = {
     try {
       const body = { ...req.body };
       if (body.tanggal) body.tanggal = new Date(body.tanggal);
+      
+      if (req.file) {
+        body.attachment_url = `/uploads/memos/${req.file.filename}`;
+        
+        // Delete old file
+        const fs = require('fs');
+        const path = require('path');
+        const existing = await internalMemoService.getById(req.params.id);
+        if (existing && existing.attachment_url) {
+          const oldPath = path.join(__dirname, '../../', existing.attachment_url);
+          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        }
+      }
+
       const data = await internalMemoService.update(req.params.id, body);
       res.json({ success: true, data });
     } catch (error) {
@@ -45,6 +64,15 @@ const internalMemoController = {
 
   async delete(req, res) {
     try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      const existing = await internalMemoService.getById(req.params.id);
+      if (existing && existing.attachment_url) {
+        const filePath = path.join(__dirname, '../../', existing.attachment_url);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      }
+
       await internalMemoService.delete(req.params.id);
       res.json({ success: true, message: 'Memo berhasil dihapus' });
     } catch (error) {
